@@ -8,7 +8,7 @@ use FeedWriter\RSS2;    // エイリアスの作成
 
 require_once "vendor/autoload.php";
 
-$baseUrl = 'https://news.yahoo.co.jp/categories/domestic';
+$baseUrl = 'https://www.w3.org/TR/';
 $startPage = 1;
 $maxPage = 3;
 
@@ -18,10 +18,13 @@ $posts = [];
 $dom = \phpQuery::newDocumentFile($baseUrl);
 
 // - ②
-foreach ($dom['li[class="topicsListItem "]'] as $row) {
+foreach ($dom['li[data-status="rec"]'] as $row) {
     // - ③
-    $title = pq($row)->find('a')->text();
-    $url = pq($row)->find('a')->attr('href');
+    $title = pq($row)->find('h2')->text();
+    $url = pq($row)->find('h2 > a')->attr('href');
+    $pubDetail = pq($row)->find('.pubdetails')->text();
+    $dateNum = substr($pubDetail, 0, 10);
+    $pubDate = date("Y-n-j", strtotime($dateNum));
     // $datetext = pq($row)->find('newsFeed_item_date')->text();
 //    $datebase = substr($datetext, 0, 4);
 //    $date = date("n-j", strtotime($datebase));
@@ -29,7 +32,7 @@ foreach ($dom['li[class="topicsListItem "]'] as $row) {
     $posts[] = [
         'title' => $title,
         'url' => $url,
-//        'date' => $date
+        'date' => $pubDate
     ];
 }
 
@@ -43,7 +46,7 @@ $feed = new RSS2;
 
 // チャンネル情報の登録
 $feed->setTitle( "" ) ;    // チャンネル名
-$feed->setLink( "https://news.yahoo.co.jp/categories/domestic" ) ;    // URLアドレス
+$feed->setLink( "https://www.w3.org/TR/" ) ;    // URLアドレス
 $feed->setDescription( "hoge" );    // チャンネル紹介テキスト
 $feed->setDate(strtotime("2019-05-15 18:30")); // 更新日時
 $feed->setChannelElement( "language" , "ja-JP" ) ;    // 言語
@@ -56,8 +59,7 @@ foreach($posts as $key => $val){
     // アイテムの情報
     $item->setTitle( $val['title'] ) ;    // タイトル
     $item->setLink( $val['url'] ) ;    // リンク
-    //$item->setDate( $val['date'] ) ;    // 更新日時
-//    $item->setDate( $val['date'] );
+    $item->setDate( $val['date'] ) ;    // 更新日時
 
     // アイテムの追加
     $feed->addItem( $item ) ;
